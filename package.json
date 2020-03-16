@@ -4,8 +4,13 @@
   "description": "bc-nc-news",
   "main": "index.js",
   "scripts": {
-    "setup-dbs": "psql -f ./db/setup.sql",
-    "seed": "knex seed:run",
+    "setup-dev-db": "psql -f ./db/dev-setup.sql",
+    "setup-test-db": "psql -f ./db/test-setup.sql",
+    "migrate:make": "knex migrate:make", //npm run migrate:make 'create table name'
+    "migrate:latest": "knex migrate:latest", //npm run migrate:latest - creates the tables
+    "migrate:rollback": "knex migrate:rollback", //npm run migrate:rollback - drops the tables
+    "seed-dev": "npm run setup-dev-db && knex seed:run",
+    "seed-test": "npm run setup-test-db && NODE_ENV=test knex seed:run",
     "test-utils": "mocha spec/utils.spec.js",
     "test": "mocha spec/app.spec.js"
   },
@@ -20,6 +25,13 @@
     "url": "https://github.com/northcoders/be-nc-news/issues"
   },
   "homepage": "https://github.com/northcoders/be-nc-news#readme",
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "knex": "^0.20.11",
+    "pg": "^7.18.2"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^7.1.0",
+    "supertest": "^4.0.2"
+  }
 }
