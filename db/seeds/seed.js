@@ -3,32 +3,33 @@ const data = require('../data/index.js');
 const { formatDates, formatComments, makeRefObj } = require('../utils/utils');
 
 exports.seed = function(knex) {
-  const topicsInsertions = knex('topics').insert(data.topicData);
-  const usersInsertions = knex('users').insert(data.userData);
-
-  return Promise.all([topicsInsertions, usersInsertions])
+  return knex.migrate
+    .rollback()
     .then(() => {
-      /* 
-      
-      Your article data is currently in the incorrect format and will violate your SQL schema. 
-      
-      You will need to write and test the provided formatDate utility function to be able insert your article data.
+      return knex.migrate.latest();
+    })
+    .then(() => {
+      const usersInsertions = knex('users')
+        .insert(data.userData)
+        .returning('*');
+      const topicsInsertions = knex('topics')
+        .insert(data.topicData)
+        .returning('*');
 
-      Your comment insertions will depend on information from the seeded articles, so make sure to return the data after it's been seeded.
-      */
+      return Promise.all([topicsInsertions, usersInsertions]);
+    })
+    .then(() => {
+      const correctDateArticles = formatDates(data.articleData);
+      return knex('articles')
+        .insert(correctDateArticles)
+        .returning('*');
     })
     .then(articleRows => {
-      /* 
-
-      Your comment data is currently in the incorrect format and will violate your SQL schema. 
-
-      Keys need renaming, values need changing, and most annoyingly, your comments currently only refer to the title of the article they belong to, not the id. 
-      
-      You will need to write and test the provided makeRefObj and formatComments utility functions to be able insert your comment data.
-      */
-
       const articleRef = makeRefObj(articleRows);
-      const formattedComments = formatComments(commentData, articleRef);
-      return knex('comments').insert(formattedComments);
+      const correctDateComments = formatDates(data.commentData);
+      const editedComments = formatComments(correctDateComments, articleRef);
+      return knex('comments')
+        .insert(editedComments)
+        .returning('*');
     });
 };

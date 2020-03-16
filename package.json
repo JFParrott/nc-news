@@ -6,11 +6,13 @@
   "scripts": {
     "setup-dev-db": "psql -f ./db/dev-setup.sql",
     "setup-test-db": "psql -f ./db/test-setup.sql",
-    "migrate:make": "knex migrate:make", //npm run migrate:make 'create table name'
-    "migrate:latest": "knex migrate:latest", //npm run migrate:latest - creates the tables
-    "migrate:rollback": "knex migrate:rollback", //npm run migrate:rollback - drops the tables
-    "seed-dev": "npm run setup-dev-db && knex seed:run",
-    "seed-test": "npm run setup-test-db && NODE_ENV=test knex seed:run",
+    "migrate:make": "knex migrate:make",
+    "migrate:latest-dev": "knex migrate:latest",
+    "migrate:latest-test": "NODE_ENV=test knex migrate:latest",
+    "migrate:rollback-dev": "knex migrate:rollback",
+    "migrate:rollback-test": "NODE_ENV=test knex migrate:rollback",
+    "seed-dev": "knex seed:run",
+    "seed-test": "NODE_ENV=test knex seed:run",
     "test-utils": "mocha spec/utils.spec.js",
     "test": "mocha spec/app.spec.js"
   },
@@ -26,6 +28,7 @@
   },
   "homepage": "https://github.com/northcoders/be-nc-news#readme",
   "dependencies": {
+    "express": "^4.17.1",
     "knex": "^0.20.11",
     "pg": "^7.18.2"
   },
