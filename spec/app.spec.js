@@ -15,6 +15,14 @@ describe('/api', () => {
   after(() => {
     connection.destroy();
   });
+  it('GET: 404 and "Route not found" message when non-existent route', () => {
+    return request(app)
+      .get('/api/rewards')
+      .expect(404)
+      .then(err => {
+        expect(err.body.msg).to.equal('Route not found');
+      });
+  });
   describe('/topics', () => {
     it('GET: 200 and object containing array of topics', () => {
       return request(app)
@@ -24,6 +32,18 @@ describe('/api', () => {
           expect(res.body.topics).to.be.an('array');
           expect(res.body.topics[0]).to.contain.keys('slug', 'description');
         });
+    });
+    it('status: 405', () => {
+      const invalidMethods = ['patch', 'put', 'delete'];
+      const methodPromises = invalidMethods.map(method => {
+        return request(app)
+          [method]('/api/topics')
+          .expect(405)
+          .then(res => {
+            expect(res.body.msg).to.equal('Method not allowed');
+          });
+      });
+      return Promise.all(methodPromises);
     });
   });
   describe('/users', () => {
@@ -40,6 +60,65 @@ describe('/api', () => {
                 avatar_url:
                   'https://www.golenbock.com/wp-content/uploads/2015/01/placeholder-user.png'
               }
+            });
+          });
+      });
+      it('GET: 404 and "Invalid Username" message when non-existent username provided', () => {
+        return request(app)
+          .get('/api/users/bob')
+          .expect(404)
+          .then(err => {
+            expect(err.body.msg).to.equal('Invalid Username');
+          });
+      });
+      it('status: 405', () => {
+        const invalidMethods = ['patch', 'put', 'delete'];
+        const methodPromises = invalidMethods.map(method => {
+          return request(app)
+            [method]('/api/users/1')
+            .expect(405)
+            .then(res => {
+              expect(res.body.msg).to.equal('Method not allowed');
+            });
+        });
+        return Promise.all(methodPromises);
+      });
+    });
+  });
+  describe('/articles', () => {
+    describe('/:article_id', () => {
+      it('GET: 200 and object containing correct article properties, including comment count', () => {
+        return request(app)
+          .get('/api/articles/1')
+          .expect(200)
+          .then(res => {
+            expect(res.body.article).to.eql({
+              article_id: 1,
+              title: 'Living in the shadow of a great man',
+              body: 'I find this existence challenging',
+              votes: 100,
+              topic: 'mitch',
+              author: 'butter_bridge',
+              created_at: '2018-11-15T12:21:54.171Z',
+              comment_count: 13
+            });
+          });
+      });
+      it('PATCH: 200 and object containing updated vote count', () => {
+        return request(app)
+          .patch('/api/articles/2')
+          .send({ inc_votes: 10 })
+          .expect(200)
+          .then(article => {
+            expect(article.body.article).to.eql({
+              article_id: 2,
+              title: 'Sony Vaio; or, The Laptop',
+              body:
+                'Call me Mitchell. Some years ago—never mind how long precisely—having little or no money in my purse, and nothing particular to interest me on shore, I thought I would buy a laptop about a little and see the codey part of the world. It is a way I have of driving off the spleen and regulating the circulation. Whenever I find myself growing grim about the mouth; whenever it is a damp, drizzly November in my soul; whenever I find myself involuntarily pausing before coffin warehouses, and bringing up the rear of every funeral I meet; and especially whenever my hypos get such an upper hand of me, that it requires a strong moral principle to prevent me from deliberately stepping into the street, and methodically knocking people’s hats off—then, I account it high time to get to coding as soon as I can. This is my substitute for pistol and ball. With a philosophical flourish Cato throws himself upon his sword; I quietly take to the laptop. There is nothing surprising in this. If they but knew it, almost all men in their degree, some time or other, cherish very nearly the same feelings towards the the Vaio with me.',
+              votes: 10,
+              topic: 'mitch',
+              author: 'icellusedkars',
+              created_at: '2014-11-16T12:21:54.171Z'
             });
           });
       });
