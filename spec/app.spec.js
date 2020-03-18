@@ -142,6 +142,26 @@ describe('/api', () => {
           expect(res.body.articles).to.have.length(2);
         });
     });
+    it('GET: 200 and object containing empty array when topic query has no associated articles', () => {
+      return request(app)
+        .get('/api/articles?topic=paper')
+        .expect(200)
+        .then(res => {
+          expect(res.body.articles).to.be.an('array');
+          expect(res.body.articles).to.have.length(0);
+        });
+    });
+    //WORK ON THIS
+    it('GET: 200 and object containing empty array when author query has no associated articles', () => {
+      return request(app)
+        .get('/api/articles?author=lurker')
+        .expect(200)
+        .then(res => {
+          expect(res.body.articles).to.be.an('array');
+          expect(res.body.articles).to.have.length(0);
+        });
+    });
+    //WORK ON THIS
     it('GET: 400 and "Invalid input" message when attempting to sort_by a column which does not exist', () => {
       return request(app)
         .get('/api/articles?sort_by=beethoven')
@@ -150,7 +170,7 @@ describe('/api', () => {
           expect(err.body.msg).to.equal('Invalid input');
         });
     });
-    it.only('GET: 404 and "Invalid Username" message when author in query does not exist', () => {
+    it('GET: 404 and "Invalid Username" message when author in query does not exist', () => {
       return request(app)
         .get('/api/articles?author=beethoven')
         .expect(404)
@@ -159,9 +179,9 @@ describe('/api', () => {
         });
     });
     //WORK ON THIS
-    it.only('GET: 404 and "Topic does not exist" message when topic in query does not exist', () => {
+    it('GET: 404 and "Topic does not exist" message when topic in query does not exist', () => {
       return request(app)
-        .get('/api/articles?topic=beethoven')
+        .get('/api/articles?topic=paper')
         .expect(404)
         .then(err => {
           expect(err.body.msg).to.equal('Topic does not exist');

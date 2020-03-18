@@ -19,6 +19,5 @@ module.exports = app;
 
 /*
 TO DO:
-Destructuring objects for best practice
-/api/articles queries error handling/testing
+/api/articles queries error handling/testing - returns empty array instead of error when topic or author's are existent but have made no articles. For example when topic is paper and author is lurker
 */

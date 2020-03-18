@@ -2,7 +2,6 @@ const connection = require('../db/connection');
 const { selectUserByUsername } = require('./users.models');
 
 exports.selectArticles = (article_id, query) => {
-  console.log(query);
   const sort_by = query.sort_by || 'created_at';
   const order = query.order || 'desc';
   const author = query.author;
