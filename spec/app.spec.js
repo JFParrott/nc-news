@@ -31,10 +31,11 @@ describe('/api', () => {
         .then(res => {
           expect(res.body.topics).to.be.an('array');
           expect(res.body.topics[0]).to.contain.keys('slug', 'description');
+          expect(res.body.topics).to.be.length(3);
         });
     });
     it('status: 405 and "Method not allowed" message', () => {
-      const invalidMethods = ['patch', 'put', 'delete'];
+      const invalidMethods = ['patch', 'put', 'delete', 'post'];
       const methodPromises = invalidMethods.map(method => {
         return request(app)
           [method]('/api/topics')
@@ -53,14 +54,12 @@ describe('/api', () => {
           .get('/api/users/lurker')
           .expect(200)
           .then(res => {
-            expect(res.body).to.eql({
-              user: {
-                username: 'lurker',
-                name: 'do_nothing',
-                avatar_url:
-                  'https://www.golenbock.com/wp-content/uploads/2015/01/placeholder-user.png'
-              }
-            });
+            expect(res.body.user).to.contain.keys(
+              'username',
+              'name',
+              'avatar_url'
+            );
+            expect(res.body.user.username).to.equal('lurker');
           });
       });
       it('GET: 404 and "Invalid Username" message when non-existent username provided', () => {
@@ -72,7 +71,7 @@ describe('/api', () => {
           });
       });
       it('status: 405 and "Method not allowed" message', () => {
-        const invalidMethods = ['patch', 'put', 'delete'];
+        const invalidMethods = ['patch', 'post', 'put', 'delete'];
         const methodPromises = invalidMethods.map(method => {
           return request(app)
             [method]('/api/users/1')
@@ -86,22 +85,109 @@ describe('/api', () => {
     });
   });
   describe('/articles', () => {
+    it('GET: 200 and object containing array of all articles sorted by created_at in desc order when no queries', () => {
+      return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(res => {
+          expect(res.body.articles).to.be.an('array');
+          expect(res.body.articles[0]).to.contain.keys(
+            'author',
+            'title',
+            'article_id',
+            'topic',
+            'created_at',
+            'votes',
+            'comment_count'
+          );
+          expect(res.body.articles).to.have.length(12);
+          expect(res.body.articles).to.be.sortedBy('created_at', {
+            descending: true
+          });
+        });
+    });
+    it('GET: 200 and object containing array of ascending sorted articles when sort_by & order queries provided', () => {
+      return request(app)
+        .get('/api/articles?sort_by=article_id&order=asc')
+        .expect(200)
+        .then(res => {
+          expect(res.body.articles).to.be.sortedBy('article_id');
+        });
+    });
+    it('GET: 200 and object containing only articles by specific user when author query provided', () => {
+      return request(app)
+        .get('/api/articles?author=butter_bridge')
+        .expect(200)
+        .then(res => {
+          expect(res.body.articles).to.have.length(3);
+          expect(res.body.articles[0].author).to.equal('butter_bridge');
+        });
+    });
+    it('GET: 200 and object containing on articles on specific topic when topic query provided', () => {
+      return request(app)
+        .get('/api/articles?topic=mitch')
+        .expect(200)
+        .then(res => {
+          expect(res.body.articles[0].topic).to.equal('mitch');
+          expect(res.body.articles).to.have.length(11);
+        });
+    });
+    it('GET: 200 and object containing articles on specific topic and by specific user when author and topic query both provided', () => {
+      return request(app)
+        .get('/api/articles?author=rogersop&topic=mitch')
+        .expect(200)
+        .then(res => {
+          expect(res.body.articles[0].topic).to.equal('mitch');
+          expect(res.body.articles[0].author).to.equal('rogersop');
+          expect(res.body.articles).to.have.length(2);
+        });
+    });
+    it('GET: 400 and "Invalid input" message when attempting to sort_by a column which does not exist', () => {
+      return request(app)
+        .get('/api/articles?sort_by=beethoven')
+        .expect(400)
+        .then(err => {
+          expect(err.body.msg).to.equal('Invalid input');
+        });
+    });
+    it.only('GET: 404 and "Invalid Username" message when author in query does not exist', () => {
+      return request(app)
+        .get('/api/articles?author=beethoven')
+        .expect(404)
+        .then(err => {
+          expect(err.body.msg).to.equal('Invalid Username');
+        });
+    });
+    //WORK ON THIS
+    it.only('GET: 404 and "Topic does not exist" message when topic in query does not exist', () => {
+      return request(app)
+        .get('/api/articles?topic=beethoven')
+        .expect(404)
+        .then(err => {
+          expect(err.body.msg).to.equal('Topic does not exist');
+        });
+    });
+    //WORK ON THIS
+    it('status: 405 and "Method not allowed" message', () => {
+      const invalidMethods = ['patch', 'put', 'post', 'delete'];
+      const methodPromises = invalidMethods.map(method => {
+        return request(app)
+          [method]('/api/articles')
+          .expect(405)
+          .then(res => {
+            expect(res.body.msg).to.equal('Method not allowed');
+          });
+      });
+      return Promise.all(methodPromises);
+    });
     describe('/:article_id', () => {
       it('GET: 200 and object containing correct article properties, including comment count', () => {
         return request(app)
           .get('/api/articles/1')
           .expect(200)
           .then(res => {
-            expect(res.body.article).to.eql({
-              article_id: 1,
-              title: 'Living in the shadow of a great man',
-              body: 'I find this existence challenging',
-              votes: 100,
-              topic: 'mitch',
-              author: 'butter_bridge',
-              created_at: '2018-11-15T12:21:54.171Z',
-              comment_count: 13
-            });
+            expect(res.body.articles.article_id).to.equal(1);
+            expect(res.body.articles.comment_count).to.equal('13');
           });
       });
       it('GET: 404 and "Article ID does not exist" message when non-existent article_id provided', () => {
@@ -126,16 +212,17 @@ describe('/api', () => {
           .send({ inc_votes: -10 })
           .expect(200)
           .then(res => {
-            expect(res.body.article).to.eql({
-              article_id: 2,
-              title: 'Sony Vaio; or, The Laptop',
-              body:
-                'Call me Mitchell. Some years ago—never mind how long precisely—having little or no money in my purse, and nothing particular to interest me on shore, I thought I would buy a laptop about a little and see the codey part of the world. It is a way I have of driving off the spleen and regulating the circulation. Whenever I find myself growing grim about the mouth; whenever it is a damp, drizzly November in my soul; whenever I find myself involuntarily pausing before coffin warehouses, and bringing up the rear of every funeral I meet; and especially whenever my hypos get such an upper hand of me, that it requires a strong moral principle to prevent me from deliberately stepping into the street, and methodically knocking people’s hats off—then, I account it high time to get to coding as soon as I can. This is my substitute for pistol and ball. With a philosophical flourish Cato throws himself upon his sword; I quietly take to the laptop. There is nothing surprising in this. If they but knew it, almost all men in their degree, some time or other, cherish very nearly the same feelings towards the the Vaio with me.',
-              votes: -10,
-              topic: 'mitch',
-              author: 'icellusedkars',
-              created_at: '2014-11-16T12:21:54.171Z'
-            });
+            expect(res.body.article).to.contain.keys(
+              'article_id',
+              'title',
+              'body',
+              'votes',
+              'topic',
+              'author',
+              'created_at'
+            );
+            expect(res.body.article.article_id).to.equal(2);
+            expect(res.body.article.votes).to.equal(-10);
           });
       });
       it('PATCH: 404 and "Article ID does not exist" message when non-existent article_id provided', () => {
@@ -175,7 +262,7 @@ describe('/api', () => {
           });
       });
       it('status: 405 and "Method not allowed" message', () => {
-        const invalidMethods = ['put', 'delete'];
+        const invalidMethods = ['put', 'post', 'delete'];
         const methodPromises = invalidMethods.map(method => {
           return request(app)
             [method]('/api/articles/1')
@@ -187,7 +274,7 @@ describe('/api', () => {
         return Promise.all(methodPromises);
       });
       describe('/comments', () => {
-        it('GET: 200 and object of comments associated to provided article_id', () => {
+        it('GET: 200 and object containing array of comments sorted by created_at in desc order when no queries', () => {
           return request(app)
             .get('/api/articles/1/comments')
             .expect(200)
@@ -200,8 +287,180 @@ describe('/api', () => {
                 'created_at',
                 'body'
               );
+              expect(res.body.comments).to.be.sortedBy('created_at', {
+                descending: true
+              });
+              expect(res.body.comments).to.be.length(13);
             });
         });
+        it('GET: 200 and object containing array of comments that are sorted by specified column and order', () => {
+          return request(app)
+            .get('/api/articles/1/comments?sort_by=author&order=asc')
+            .expect(200)
+            .then(res => {
+              expect(res.body.comments).to.be.sortedBy('author');
+            });
+        });
+        it('GET: 404 and "Article ID does not exist" message when non-existent article_id is provided', () => {
+          return request(app)
+            .get('/api/articles/99/comments')
+            .expect(404)
+            .then(err => {
+              expect(err.body.msg).to.equal('Article ID does not exist');
+            });
+        });
+        it('GET: 400 and "Bad request" message when invalid article_id', () => {
+          return request(app)
+            .get('/api/articles/blue/comments')
+            .expect(400)
+            .then(err => {
+              expect(err.body.msg).to.equal('Bad request');
+            });
+        });
+        it('GET: 200 and object containing array of comments sorted by created_at in desc when invalid queries', () => {
+          return request(app)
+            .get('/api/articles/1/comments?sort=author')
+            .expect(200)
+            .then(res => {
+              expect(res.body.comments).to.be.sortedBy('created_at', {
+                descending: true
+              });
+            });
+        });
+        it('POST: 200 and object containing the posted comment', () => {
+          return request(app)
+            .post('/api/articles/1/comments')
+            .send({ username: 'rogersop', body: 'rather good' })
+            .expect(200)
+            .then(res => {
+              expect(res.body.comment).to.contain.keys(
+                'article_id',
+                'author',
+                'body',
+                'comment_id',
+                'created_at',
+                'votes'
+              );
+              expect(res.body.comment.article_id).to.equal(1);
+              expect(res.body.comment.author).to.equal('rogersop');
+              expect(res.body.comment.votes).to.equal(0);
+              expect(res.body.comment.body).to.equal('rather good');
+            });
+        });
+        it('POST: 404 and "Not found" message when non-existent article_id is provided', () => {
+          return request(app)
+            .post('/api/articles/99/comments')
+            .send({ username: 'rogersop', body: 'rather good' })
+            .expect(404)
+            .then(err => {
+              expect(err.body.msg).to.equal('Not found');
+            });
+        });
+        it('POST: 400 and "Bad request" message when invalid article_id', () => {
+          return request(app)
+            .post('/api/articles/blue/comments')
+            .send({ username: 'rogersop', body: 'rather good' })
+            .expect(400)
+            .then(err => {
+              expect(err.body.msg).to.equal('Bad request');
+            });
+        });
+        it('POST: 400 and "Invalid input" message when invalid columns provided', () => {
+          return request(app)
+            .post('/api/articles/1/comments')
+            .send({ name: 'rogersop', body: 'rather good' })
+            .expect(400)
+            .then(err => {
+              expect(err.body.msg).to.equal('Invalid input');
+            });
+        });
+        it('status: 405 "Method not allowed" message', () => {
+          const invalidMethods = ['patch', 'put', 'delete'];
+          const methodPromises = invalidMethods.map(method => {
+            return request(app)
+              [method]('/api/articles/1/comments')
+              .expect(405)
+              .then(res => {
+                expect(res.body.msg).to.equal('Method not allowed');
+              });
+          });
+          return Promise.all(methodPromises);
+        });
+      });
+    });
+  });
+  describe('/comments', () => {
+    describe('/:comment_id', () => {
+      it('PATCH: 200 and object containing comment with updated vote count', () => {
+        return request(app)
+          .patch('/api/comments/1')
+          .send({ inc_votes: 10 })
+          .expect(200)
+          .then(res => {
+            expect(res.body.comment.comment_id).to.equal(1);
+            expect(res.body.comment).to.contain.keys(
+              'comment_id',
+              'author',
+              'article_id',
+              'votes',
+              'created_at',
+              'body'
+            );
+            expect(res.body.comment.votes).to.equal(26);
+          });
+      });
+      it('PATCH: 404 and "Comment ID does not exist" message when non-existent comment_id provided', () => {
+        return request(app)
+          .patch('/api/comments/99')
+          .send({ inc_votes: 10 })
+          .expect(404)
+          .then(err => {
+            expect(err.body.msg).to.equal('Comment ID does not exist');
+          });
+      });
+      it('PATCH: 400 and "Bad request" message when comment_id is invalid type', () => {
+        return request(app)
+          .patch('/api/comments/blue')
+          .send({ inc_votes: 5 })
+          .expect(400)
+          .then(err => {
+            expect(err.body.msg).to.equal('Bad request');
+          });
+      });
+      it('PATCH: 400 and "Invalid input" message when inc_votes key is missing', () => {
+        return request(app)
+          .patch('/api/comments/1')
+          .send({ votes: 5 })
+          .expect(400)
+          .then(err => {
+            expect(err.body.msg).to.equal('Invalid input');
+          });
+      });
+      it('PATCH: 400 and "Invalid input" message when inc_votes value is wrong type', () => {
+        return request(app)
+          .patch('/api/comments/1')
+          .send({ inc_votes: 'blue' })
+          .expect(400)
+          .then(err => {
+            expect(err.body.msg).to.equal('Invalid input');
+          });
+      });
+      it('DELETE: 204', () => {
+        return request(app)
+          .delete('/api/comments/1')
+          .expect(204);
+      });
+      it('status: 405 and "Method not allowed" message', () => {
+        const invalidMethods = ['get', 'post', 'put'];
+        const methodPromises = invalidMethods.map(method => {
+          return request(app)
+            [method]('/api/comments/2')
+            .expect(405)
+            .then(res => {
+              expect(res.body.msg).to.equal('Method not allowed');
+            });
+        });
+        return Promise.all(methodPromises);
       });
     });
   });

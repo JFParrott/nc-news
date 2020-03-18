@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const apiRouter = require('./routes/api.routes.js');
-const { psqlErrors, otherErrors } = require('./errors');
+const { psqlErrors, otherErrors, logError } = require('./errors');
 
 app.use(express.json());
 
@@ -12,7 +12,13 @@ app.all('/*', (req, res, next) => {
 });
 
 app.use(psqlErrors);
-
 app.use(otherErrors);
+app.use(logError);
 
 module.exports = app;
+
+/*
+TO DO:
+Destructuring objects for best practice
+/api/articles queries error handling/testing
+*/
