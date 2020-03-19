@@ -119,8 +119,8 @@ describe('/api', () => {
         .get('/api/articles?author=butter_bridge')
         .expect(200)
         .then(res => {
-          expect(res.body.articles).to.have.length(3);
           expect(res.body.articles[0].author).to.equal('butter_bridge');
+          expect(res.body.articles).to.have.length(3);
         });
     });
     it('GET: 200 and object containing on articles on specific topic when topic query provided', () => {
