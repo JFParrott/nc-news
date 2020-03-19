@@ -15,6 +15,16 @@ describe('/api', () => {
   after(() => {
     connection.destroy();
   });
+  it('GET: 200 and object containing object of available endpoints', () => {
+    return request(app)
+      .get('/api/')
+      .expect(200)
+      .then(res => {
+        const { endpoints } = res.body;
+        expect(endpoints).to.be.an('array');
+        expect(endpoints[0]).to.contain.keys('path', 'methods');
+      });
+  });
   it('GET: 404 and "Route not found" message when non-existent route', () => {
     return request(app)
       .get('/api/rewards')
@@ -22,6 +32,18 @@ describe('/api', () => {
       .then(err => {
         expect(err.body.msg).to.equal('Route not found');
       });
+  });
+  it('status: 405 and "Method not allowed" message', () => {
+    const invalidMethods = ['patch', 'put', 'delete', 'post'];
+    const methodPromises = invalidMethods.map(method => {
+      return request(app)
+        [method]('/api')
+        .expect(405)
+        .then(res => {
+          expect(res.body.msg).to.equal('Method not allowed');
+        });
+    });
+    return Promise.all(methodPromises);
   });
   describe('/topics', () => {
     it('GET: 200 and object containing array of topics', () => {
