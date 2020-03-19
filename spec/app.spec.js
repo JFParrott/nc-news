@@ -151,7 +151,6 @@ describe('/api', () => {
           expect(res.body.articles).to.have.length(0);
         });
     });
-    //WORK ON THIS
     it('GET: 200 and object containing empty array when author query has no associated articles', () => {
       return request(app)
         .get('/api/articles?author=lurker')
@@ -161,7 +160,6 @@ describe('/api', () => {
           expect(res.body.articles).to.have.length(0);
         });
     });
-    //WORK ON THIS
     it('GET: 400 and "Invalid input" message when attempting to sort_by a column which does not exist', () => {
       return request(app)
         .get('/api/articles?sort_by=beethoven')
@@ -178,7 +176,6 @@ describe('/api', () => {
           expect(err.body.msg).to.equal('Invalid Username');
         });
     });
-    //WORK ON THIS
     it('GET: 404 and "Topic does not exist" message when topic in query does not exist', () => {
       return request(app)
         .get('/api/articles?topic=paper')
@@ -187,7 +184,6 @@ describe('/api', () => {
           expect(err.body.msg).to.equal('Topic does not exist');
         });
     });
-    //WORK ON THIS
     it('status: 405 and "Method not allowed" message', () => {
       const invalidMethods = ['patch', 'put', 'post', 'delete'];
       const methodPromises = invalidMethods.map(method => {

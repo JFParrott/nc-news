@@ -18,14 +18,18 @@ exports.selectArticles = (article_id, query) => {
         query.where('articles.article_id', article_id);
       if (author !== undefined) {
         query.where('articles.author', author);
-        // selectUserByUsername(author).then(author => {
-        //   query.where('articles.author', author.author);
-        // });
       }
       if (topic !== undefined) query.where('articles.topic', topic);
     })
     .then(articles => {
-      if (articles[0] === undefined) {
+      if (author) {
+        return Promise.all([selectUserByUsername(author), articles]);
+      } else {
+        return Promise.all([true, articles]);
+      }
+    })
+    .then(([user, articles]) => {
+      if (article_id !== undefined && articles[0] === undefined) {
         return Promise.reject({
           status: 404,
           msg: 'Article ID does not exist'
