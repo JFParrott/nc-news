@@ -202,8 +202,8 @@ describe('/api', () => {
           .get('/api/articles/1')
           .expect(200)
           .then(res => {
-            expect(res.body.articles.article_id).to.equal(1);
-            expect(res.body.articles.comment_count).to.equal('13');
+            expect(res.body.article.article_id).to.equal(1);
+            expect(res.body.article.comment_count).to.equal('13');
           });
       });
       it('GET: 404 and "Article ID does not exist" message when non-existent article_id provided', () => {
@@ -317,6 +317,15 @@ describe('/api', () => {
               expect(res.body.comments).to.be.sortedBy('author');
             });
         });
+        it('GET: 200 and object containing empty array when article_id has no associated comments', () => {
+          return request(app)
+            .get('/api/articles/2/comments')
+            .expect(200)
+            .then(res => {
+              expect(res.body.comments).to.be.an('array');
+              expect(res.body.comments).to.have.length(0);
+            });
+        });
         it('GET: 404 and "Article ID does not exist" message when non-existent article_id is provided', () => {
           return request(app)
             .get('/api/articles/99/comments')
@@ -347,7 +356,7 @@ describe('/api', () => {
           return request(app)
             .post('/api/articles/1/comments')
             .send({ username: 'rogersop', body: 'rather good' })
-            .expect(200)
+            .expect(201)
             .then(res => {
               expect(res.body.comment).to.contain.keys(
                 'article_id',
@@ -379,6 +388,15 @@ describe('/api', () => {
             .expect(400)
             .then(err => {
               expect(err.body.msg).to.equal('Bad request');
+            });
+        });
+        it('POST 400 and "Invalid input" message when username or body is a null value', () => {
+          return request(app)
+            .post('/api/articles/1/comments')
+            .send({ username: null, body: 'good' })
+            .expect(400)
+            .then(err => {
+              expect(err.body.msg).to.equal('Invalid input');
             });
         });
         it('POST: 400 and "Invalid input" message when invalid columns provided', () => {
@@ -465,6 +483,22 @@ describe('/api', () => {
         return request(app)
           .delete('/api/comments/1')
           .expect(204);
+      });
+      it('DELETE: 404 and "Comment ID does not exist" message when non-existent comment_id provided', () => {
+        return request(app)
+          .delete('/api/comments/999')
+          .expect(404)
+          .then(err => {
+            expect(err.body.msg).to.equal('Comment ID does not exist');
+          });
+      });
+      it('DELETE: 400 and "Bad request" message when comment_id is invalid', () => {
+        return request(app)
+          .delete('/api/comments/blue')
+          .expect(400)
+          .then(err => {
+            expect(err.body.msg).to.equal('Bad request');
+          });
       });
       it('status: 405 and "Method not allowed" message', () => {
         const invalidMethods = ['get', 'post', 'put'];

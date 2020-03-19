@@ -24,5 +24,15 @@ exports.patchCommentVotesByCommentId = (body, comment_id) => {
 exports.removeCommentByCommentId = comment_id => {
   return connection('comments')
     .where('comment_id', comment_id)
-    .del();
+    .del()
+    .then(res => {
+      if (res === 0) {
+        return Promise.reject({
+          status: 404,
+          msg: 'Comment ID does not exist'
+        });
+      } else {
+        return res;
+      }
+    });
 };

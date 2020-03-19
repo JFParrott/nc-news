@@ -88,14 +88,22 @@ exports.selectCommentsByArticleId = (article_id, query) => {
     .select('author', 'comment_id', 'votes', 'created_at', 'body')
     .where('article_id', article_id)
     .orderBy(sort_by, order)
+    .returning('*')
     .then(comments => {
-      if (comments.length === 0) {
+      return Promise.all([
+        comments,
+        checkExists('articles', 'article_id', article_id)
+      ]);
+    })
+    .then(([comments, exists]) => {
+      if (exists !== undefined) {
+        return comments;
+      } else {
         return Promise.reject({
           status: 404,
           msg: 'Article ID does not exist'
         });
       }
-      return comments;
     });
 };
 

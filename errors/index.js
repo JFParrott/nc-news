@@ -1,5 +1,9 @@
 exports.psqlErrors = (err, req, res, next) => {
   const psqlErrorCodes = {
+    '23502': {
+      status: 400,
+      msg: 'Invalid input'
+    },
     '23503': {
       status: 404,
       msg: 'Not found'
@@ -31,6 +35,7 @@ exports.otherErrors = (err, req, res, next) => {
 
 exports.logError = (err, req, res, next) => {
   console.log(err);
+  res.status(500).send('Internal Server Error');
 };
 
 exports.send405Error = (req, res, next) => {

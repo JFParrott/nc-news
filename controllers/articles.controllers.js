@@ -8,7 +8,8 @@ const {
 exports.sendArticles = (req, res, next) => {
   selectArticles(req.params.article_id, req.query)
     .then(articles => {
-      res.send({ articles });
+      if (Array.isArray(articles)) res.send({ articles });
+      else res.send({ article: articles });
     })
     .catch(next);
 };
@@ -32,7 +33,7 @@ exports.sendCommentsByArticleId = (req, res, next) => {
 exports.addCommentByArticleId = (req, res, next) => {
   insertCommentByArticleId(req.body, req.params.article_id)
     .then(comment => {
-      res.send({ comment });
+      res.status(201).send({ comment });
     })
     .catch(next);
 };
