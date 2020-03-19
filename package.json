@@ -14,7 +14,7 @@
     "seed-dev": "knex seed:run",
     "seed-test": "NODE_ENV=test knex seed:run",
     "test-utils": "mocha spec/utils.spec.js",
-    "test": "npm run setup-test-db && mocha spec/app.spec.js"
+    "test": "npm run setup-test-db && npm run seed-test && mocha spec/app.spec.js"
   },
   "repository": {
     "type": "git",

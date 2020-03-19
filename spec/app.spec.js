@@ -178,7 +178,7 @@ describe('/api', () => {
     });
     it('GET: 404 and "Topic does not exist" message when topic in query does not exist', () => {
       return request(app)
-        .get('/api/articles?topic=paper')
+        .get('/api/articles?topic=beethoven')
         .expect(404)
         .then(err => {
           expect(err.body.msg).to.equal('Topic does not exist');

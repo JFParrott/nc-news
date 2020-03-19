@@ -1,5 +1,5 @@
 const connection = require('../db/connection');
-const { selectUserByUsername } = require('./users.models');
+const { checkExists } = require('./utils.models');
 
 exports.selectArticles = (article_id, query) => {
   const sort_by = query.sort_by || 'created_at';
@@ -23,12 +23,30 @@ exports.selectArticles = (article_id, query) => {
     })
     .then(articles => {
       if (author) {
-        return Promise.all([selectUserByUsername(author), articles]);
+        return Promise.all([
+          checkExists('users', 'username', author),
+          articles
+        ]);
       } else {
-        return Promise.all([true, articles]);
+        return [true, articles];
       }
     })
-    .then(([user, articles]) => {
+    .then(([users, articles]) => {
+      if (topic) {
+        return Promise.all([
+          users,
+          articles,
+          checkExists('topics', 'slug', topic)
+        ]);
+      } else {
+        return [users, articles, true];
+      }
+    })
+    .then(([users, articles, topics]) => {
+      if (topics === undefined)
+        return Promise.reject({ status: 404, msg: 'Topic does not exist' });
+      if (users === undefined)
+        return Promise.reject({ status: 404, msg: 'Invalid Username' });
       if (article_id !== undefined && articles[0] === undefined) {
         return Promise.reject({
           status: 404,
