@@ -1,10 +1,11 @@
 const connection = require('../db/connection');
 
 exports.patchCommentVotesByCommentId = (body, comment_id) => {
-  if (body.inc_votes && typeof body.inc_votes === 'number') {
+  const { inc_votes } = body;
+  if (inc_votes && typeof inc_votes === 'number') {
     return connection('comments')
       .where('comment_id', comment_id)
-      .increment('votes', body.inc_votes)
+      .increment('votes', inc_votes)
       .returning('*')
       .then(comment => {
         if (comment.length === 0) {

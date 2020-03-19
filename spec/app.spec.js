@@ -29,9 +29,10 @@ describe('/api', () => {
         .get('/api/topics')
         .expect(200)
         .then(res => {
-          expect(res.body.topics).to.be.an('array');
-          expect(res.body.topics[0]).to.contain.keys('slug', 'description');
-          expect(res.body.topics).to.be.length(3);
+          const { topics } = res.body;
+          expect(topics).to.be.an('array');
+          expect(topics[0]).to.contain.keys('slug', 'description');
+          expect(topics).to.be.length(3);
         });
     });
     it('status: 405 and "Method not allowed" message', () => {
@@ -54,12 +55,9 @@ describe('/api', () => {
           .get('/api/users/lurker')
           .expect(200)
           .then(res => {
-            expect(res.body.user).to.contain.keys(
-              'username',
-              'name',
-              'avatar_url'
-            );
-            expect(res.body.user.username).to.equal('lurker');
+            const { user } = res.body;
+            expect(user).to.contain.keys('username', 'name', 'avatar_url');
+            expect(user.username).to.equal('lurker');
           });
       });
       it('GET: 404 and "Invalid Username" message when non-existent username provided', () => {
@@ -90,8 +88,9 @@ describe('/api', () => {
         .get('/api/articles')
         .expect(200)
         .then(res => {
-          expect(res.body.articles).to.be.an('array');
-          expect(res.body.articles[0]).to.contain.keys(
+          const { articles } = res.body;
+          expect(articles).to.be.an('array');
+          expect(articles[0]).to.contain.keys(
             'author',
             'title',
             'article_id',
@@ -100,8 +99,8 @@ describe('/api', () => {
             'votes',
             'comment_count'
           );
-          expect(res.body.articles).to.have.length(12);
-          expect(res.body.articles).to.be.sortedBy('created_at', {
+          expect(articles).to.have.length(12);
+          expect(articles).to.be.sortedBy('created_at', {
             descending: true
           });
         });
@@ -119,8 +118,9 @@ describe('/api', () => {
         .get('/api/articles?author=butter_bridge')
         .expect(200)
         .then(res => {
-          expect(res.body.articles[0].author).to.equal('butter_bridge');
-          expect(res.body.articles).to.have.length(3);
+          const { articles } = res.body;
+          expect(articles[0].author).to.equal('butter_bridge');
+          expect(articles).to.have.length(3);
         });
     });
     it('GET: 200 and object containing on articles on specific topic when topic query provided', () => {
@@ -128,8 +128,9 @@ describe('/api', () => {
         .get('/api/articles?topic=mitch')
         .expect(200)
         .then(res => {
-          expect(res.body.articles[0].topic).to.equal('mitch');
-          expect(res.body.articles).to.have.length(11);
+          const { articles } = res.body;
+          expect(articles[0].topic).to.equal('mitch');
+          expect(articles).to.have.length(11);
         });
     });
     it('GET: 200 and object containing articles on specific topic and by specific user when author and topic query both provided', () => {
@@ -137,9 +138,10 @@ describe('/api', () => {
         .get('/api/articles?author=rogersop&topic=mitch')
         .expect(200)
         .then(res => {
-          expect(res.body.articles[0].topic).to.equal('mitch');
-          expect(res.body.articles[0].author).to.equal('rogersop');
-          expect(res.body.articles).to.have.length(2);
+          const { articles } = res.body;
+          expect(articles[0].topic).to.equal('mitch');
+          expect(articles[0].author).to.equal('rogersop');
+          expect(articles).to.have.length(2);
         });
     });
     it('GET: 200 and object containing empty array when topic query has no associated articles', () => {
@@ -147,8 +149,9 @@ describe('/api', () => {
         .get('/api/articles?topic=paper')
         .expect(200)
         .then(res => {
-          expect(res.body.articles).to.be.an('array');
-          expect(res.body.articles).to.have.length(0);
+          const { articles } = res.body;
+          expect(articles).to.be.an('array');
+          expect(articles).to.have.length(0);
         });
     });
     it('GET: 200 and object containing empty array when author query has no associated articles', () => {
@@ -156,8 +159,9 @@ describe('/api', () => {
         .get('/api/articles?author=lurker')
         .expect(200)
         .then(res => {
-          expect(res.body.articles).to.be.an('array');
-          expect(res.body.articles).to.have.length(0);
+          const { articles } = res.body;
+          expect(articles).to.be.an('array');
+          expect(articles).to.have.length(0);
         });
     });
     it('GET: 400 and "Invalid input" message when attempting to sort_by a column which does not exist', () => {
@@ -202,8 +206,9 @@ describe('/api', () => {
           .get('/api/articles/1')
           .expect(200)
           .then(res => {
-            expect(res.body.article.article_id).to.equal(1);
-            expect(res.body.article.comment_count).to.equal('13');
+            const { article } = res.body;
+            expect(article.article_id).to.equal(1);
+            expect(article.comment_count).to.equal('13');
           });
       });
       it('GET: 404 and "Article ID does not exist" message when non-existent article_id provided', () => {
@@ -228,7 +233,8 @@ describe('/api', () => {
           .send({ inc_votes: -10 })
           .expect(200)
           .then(res => {
-            expect(res.body.article).to.contain.keys(
+            const { article } = res.body;
+            expect(article).to.contain.keys(
               'article_id',
               'title',
               'body',
@@ -237,8 +243,8 @@ describe('/api', () => {
               'author',
               'created_at'
             );
-            expect(res.body.article.article_id).to.equal(2);
-            expect(res.body.article.votes).to.equal(-10);
+            expect(article.article_id).to.equal(2);
+            expect(article.votes).to.equal(-10);
           });
       });
       it('PATCH: 404 and "Article ID does not exist" message when non-existent article_id provided', () => {
@@ -295,18 +301,19 @@ describe('/api', () => {
             .get('/api/articles/1/comments')
             .expect(200)
             .then(res => {
-              expect(res.body.comments).to.be.an('array');
-              expect(res.body.comments[0]).to.contain.keys(
+              const { comments } = res.body;
+              expect(comments).to.be.an('array');
+              expect(comments[0]).to.contain.keys(
                 'comment_id',
                 'author',
                 'votes',
                 'created_at',
                 'body'
               );
-              expect(res.body.comments).to.be.sortedBy('created_at', {
+              expect(comments).to.be.sortedBy('created_at', {
                 descending: true
               });
-              expect(res.body.comments).to.be.length(13);
+              expect(comments).to.be.length(13);
             });
         });
         it('GET: 200 and object containing array of comments that are sorted by specified column and order', () => {
@@ -322,8 +329,9 @@ describe('/api', () => {
             .get('/api/articles/2/comments')
             .expect(200)
             .then(res => {
-              expect(res.body.comments).to.be.an('array');
-              expect(res.body.comments).to.have.length(0);
+              const { comments } = res.body;
+              expect(comments).to.be.an('array');
+              expect(comments).to.have.length(0);
             });
         });
         it('GET: 404 and "Article ID does not exist" message when non-existent article_id is provided', () => {
@@ -358,7 +366,8 @@ describe('/api', () => {
             .send({ username: 'rogersop', body: 'rather good' })
             .expect(201)
             .then(res => {
-              expect(res.body.comment).to.contain.keys(
+              const { comment } = res.body;
+              expect(comment).to.contain.keys(
                 'article_id',
                 'author',
                 'body',
@@ -366,10 +375,10 @@ describe('/api', () => {
                 'created_at',
                 'votes'
               );
-              expect(res.body.comment.article_id).to.equal(1);
-              expect(res.body.comment.author).to.equal('rogersop');
-              expect(res.body.comment.votes).to.equal(0);
-              expect(res.body.comment.body).to.equal('rather good');
+              expect(comment.article_id).to.equal(1);
+              expect(comment.author).to.equal('rogersop');
+              expect(comment.votes).to.equal(0);
+              expect(comment.body).to.equal('rather good');
             });
         });
         it('POST: 404 and "Not found" message when non-existent article_id is provided', () => {
@@ -431,8 +440,9 @@ describe('/api', () => {
           .send({ inc_votes: 10 })
           .expect(200)
           .then(res => {
-            expect(res.body.comment.comment_id).to.equal(1);
-            expect(res.body.comment).to.contain.keys(
+            const { comment } = res.body;
+            expect(comment.comment_id).to.equal(1);
+            expect(comment).to.contain.keys(
               'comment_id',
               'author',
               'article_id',
@@ -440,7 +450,7 @@ describe('/api', () => {
               'created_at',
               'body'
             );
-            expect(res.body.comment.votes).to.equal(26);
+            expect(comment.votes).to.equal(26);
           });
       });
       it('PATCH: 404 and "Comment ID does not exist" message when non-existent comment_id provided', () => {

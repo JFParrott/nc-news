@@ -61,10 +61,11 @@ exports.selectArticles = (article_id, query) => {
 };
 
 exports.patchArticleVotesById = (body, article_id) => {
-  if (body.inc_votes && typeof body.inc_votes === 'number') {
+  const { inc_votes } = body;
+  if (inc_votes && typeof inc_votes === 'number') {
     return connection('articles')
       .where('article_id', article_id)
-      .increment('votes', body.inc_votes)
+      .increment('votes', inc_votes)
       .returning('*')
       .then(articles => {
         if (articles.length === 0) {
