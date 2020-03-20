@@ -26,3 +26,9 @@ app.use(otherErrors);
 app.use(logError);
 
 module.exports = app;
+
+/*
+TO-DO: 
+Refactor selectArticles function - seek assistance
+Read Me for the project
+*/
