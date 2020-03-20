@@ -18,7 +18,7 @@
     "seed-test": "npm run setup-test-db && NODE_ENV=test knex seed:run",
     "test-utils": "mocha spec/utils.spec.js",
     "test": "npm run seed-test && mocha spec/app.spec.js",
-    "start": "node listen.js"
+    "start": "nodemon listen.js"
   },
   "repository": {
     "type": "git",
@@ -35,6 +35,7 @@
     "express": "^4.17.1",
     "express-list-endpoints": "^4.0.1",
     "knex": "^0.20.11",
+    "nodemon": "^2.0.2",
     "pg": "^7.18.2"
   },
   "devDependencies": {
